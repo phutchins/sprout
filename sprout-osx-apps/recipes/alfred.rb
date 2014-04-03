@@ -19,9 +19,15 @@ execute "extract_alfred" do
   notifies :run, "execute[start_alfred]", :immediately
 end
 
+execute "check_alfred_running" do
+  Chef::Log.info("Checking if Alfred is running...")
+  command %{osascript -e 'if application "Alfred 2" is running then' -e 'return 0' -e 'end if'}
+end
+
+# Check to see if alfred needs to be launched before launching
 execute "start_alfred" do
   Chef::Log.info("Starting Alfred")
-  command %{osascript -e "tell application \\"Alfred 2\\" to activate"}
-  only_if { node['sprout']['apps']['alfred']['launch_after_install'] }
+  command %{osascript -e 'tell application "Alfred 2" to activate'}
+  not_if { !node['sprout']['apps']['alfred']['launch_after_install'] && 'osascript -e \'if application "Alfred 2" is running then\' -e \'return 0\' -e \'end if\''}
   action :nothing
 end
